@@ -24,6 +24,7 @@ import android.media.MediaMetadata;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
+import android.provider.Settings;
 import android.service.notification.NotificationStats;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;
@@ -40,6 +41,7 @@ import com.android.systemui.statusbar.notification.collection.NotificationEntry;
 import com.android.systemui.statusbar.notification.collection.notifcollection.DismissedByUserStats;
 import com.android.systemui.statusbar.notification.collection.notifcollection.NotifCollectionListener;
 import com.android.systemui.statusbar.notification.collection.render.NotificationVisibilityProvider;
+import com.android.systemui.tuner.TunerService;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -52,10 +54,14 @@ import java.util.Optional;
  * Handles tasks and state related to media notifications. For example, there is a 'current' media
  * notification, which this class keeps track of.
  */
-public class NotificationMediaManager implements Dumpable {
+public class NotificationMediaManager implements Dumpable, TunerService.Tunable {
     private static final String TAG = "NotificationMediaManager";
     public static final boolean DEBUG_MEDIA = false;
 
+    private static final String LOCKSCREEN_MEDIA_METADATA =
+            Settings.Secure.LOCKSCREEN_MEDIA_METADATA;
+
+    private final TunerService mTunerService;
     private static final HashSet<Integer> PAUSED_MEDIA_STATES = new HashSet<>();
     private static final HashSet<Integer> CONNECTING_MEDIA_STATES = new HashSet<>();
     static {
@@ -79,6 +85,8 @@ public class NotificationMediaManager implements Dumpable {
     private MediaController mMediaController;
     private String mMediaNotificationKey;
     private MediaMetadata mMediaMetadata;
+
+    private boolean mShowMediaMetadata;
 
     private final MediaController.Callback mMediaListener = new MediaController.Callback() {
         @Override
@@ -115,7 +123,8 @@ public class NotificationMediaManager implements Dumpable {
             NotifPipeline notifPipeline,
             NotifCollection notifCollection,
             MediaDataManager mediaDataManager,
-            DumpManager dumpManager) {
+            DumpManager dumpManager,
+            TunerService tunerService) {
         mContext = context;
         mMediaListeners = new ArrayList<>();
         mVisibilityProvider = visibilityProvider;
@@ -126,6 +135,17 @@ public class NotificationMediaManager implements Dumpable {
         setupNotifPipeline();
 
         dumpManager.registerDumpable(this);
+
+        mTunerService = tunerService;
+        mTunerService.addTunable(this, LOCKSCREEN_MEDIA_METADATA);
+    }
+
+    @Override
+    public void onTuningChanged(String key, String newValue) {
+        if (LOCKSCREEN_MEDIA_METADATA.equals(key)) {
+            mShowMediaMetadata = TunerService.parseIntegerSwitch(newValue, false);
+            dispatchUpdateMediaMetaData();
+        }
     }
 
     private void setupNotifPipeline() {
