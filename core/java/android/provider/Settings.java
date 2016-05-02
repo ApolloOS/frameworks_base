@@ -6799,6 +6799,13 @@ public final class Settings {
         public static final String QS_TILE_SECONDARY_LABEL_SIZE = "qs_tile_secondary_label_size";
 
         /**
+         * Whether keyguard will rotate
+         * 0 = false, 1 = true
+         */
+        @SuppressLint("NoSettingsProvider")
+        public static final String LOCKSCREEN_ROTATION = "lockscreen_rotation";
+
+        /**
          * These are all public system settings
          *
          * @hide
