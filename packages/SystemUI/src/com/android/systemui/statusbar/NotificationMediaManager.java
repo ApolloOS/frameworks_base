@@ -24,6 +24,7 @@ import android.media.MediaMetadata;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
 import android.media.session.PlaybackState;
+import android.os.UserHandle;
 import android.provider.Settings;
 import android.service.notification.NotificationStats;
 import android.service.notification.StatusBarNotification;
@@ -404,6 +405,13 @@ public class NotificationMediaManager implements Dumpable, TunerService.Tunable 
             mMediaController.unregisterCallback(mMediaListener);
         }
         mMediaController = null;
+    }
+
+    private float getLockScreenMediaBlurLevel() {
+        float level = (float) Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.LOCKSCREEN_MEDIA_BLUR, 25,
+                UserHandle.USER_CURRENT) / 100;
+        return level;
     }
 
     public interface MediaListener {
