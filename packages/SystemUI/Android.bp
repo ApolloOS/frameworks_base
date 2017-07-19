@@ -212,6 +212,10 @@ android_library {
     manifest: "AndroidManifest.xml",
     additional_manifests: ["ApolloManifest.xml"],
 
+    libs: [
+        "ims-common",
+    ],
+
     javacflags: [
         "-Adagger.fastInit=enabled",
         "-Aroom.schemaLocation=frameworks/base/packages/SystemUI/schemas",
@@ -366,6 +370,7 @@ android_library {
         "android.test.base",
         "android.test.mock",
         "keepanno-annotations",
+        "ims-common",
     ],
     kotlincflags: ["-Xjvm-default=all"],
     aaptflags: [
@@ -503,6 +508,10 @@ android_app {
     system_ext_specific: true,
     certificate: "platform",
     privileged: true,
+
+    libs: [
+        "ims-common",
+    ],
 
     kotlincflags: ["-Xjvm-default=all"],
 
