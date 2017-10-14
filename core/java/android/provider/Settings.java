@@ -6733,6 +6733,18 @@ public final class Settings {
         public static final String QQS_LAYOUT = "qqs_layout";
 
         /**
+         * Whether to show the brightness slider in quick settings panel.
+         * @hide
+         */
+        public static final String QS_SHOW_BRIGHTNESS_SLIDER = "qs_show_brightness_slider";
+
+        /**
+         * Whether to show the auto brightness icon in quick settings panel.
+         * @hide
+         */
+        public static final String QS_SHOW_AUTO_BRIGHTNESS = "qs_show_auto_brightness";
+
+        /**
          * These are all public system settings
          *
          * @hide
