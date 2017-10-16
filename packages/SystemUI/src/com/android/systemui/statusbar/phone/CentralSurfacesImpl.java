@@ -29,6 +29,9 @@ import static androidx.core.view.ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_AUTO;
 import static androidx.core.view.ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS;
 import static androidx.lifecycle.Lifecycle.State.RESUMED;
 
+import static com.android.settingslib.display.BrightnessUtils.GAMMA_SPACE_MAX;
+import static com.android.settingslib.display.BrightnessUtils.convertGammaToLinearFloat;
+
 import static com.android.systemui.Dependency.TIME_TICK_HANDLER_NAME;
 import static com.android.systemui.charging.WirelessChargingAnimation.UNKNOWN_BATTERY_LEVEL;
 import static com.android.systemui.statusbar.NotificationLockscreenUserManager.PERMISSION_SELF;
@@ -66,9 +69,11 @@ import android.content.res.Resources;
 import android.database.ContentObserver;
 import android.graphics.Point;
 import android.hardware.devicestate.DeviceStateManager;
+import android.hardware.display.DisplayManager;
 import android.hardware.fingerprint.FingerprintManager;
 import android.metrics.LogMaker;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.Handler;
@@ -90,11 +95,13 @@ import android.util.IndentingPrintWriter;
 import android.util.Log;
 import android.util.MathUtils;
 import android.view.Display;
+import android.view.HapticFeedbackConstants;
 import android.view.IRemoteAnimationRunner;
 import android.view.IWindowManager;
 import android.view.MotionEvent;
 import android.view.ThreadedRenderer;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewRootImpl;
 import android.view.WindowInsets;
@@ -299,6 +306,8 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
             "customsystem:" + Settings.System.FORCE_SHOW_NAVBAR;
     private static final String QS_TRANSPARENCY =
             "customsystem:" + Settings.System.QS_TRANSPARENCY;
+    private static final String STATUS_BAR_BRIGHTNESS_CONTROL =
+            "system:" + Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL;
 
     private static final String BANNER_ACTION_CANCEL =
             "com.android.systemui.statusbar.banner_action_cancel";
@@ -307,6 +316,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
 
     private static final int MSG_OPEN_SETTINGS_PANEL = 1002;
     private static final int MSG_LAUNCH_TRANSITION_TIMEOUT = 1003;
+    private static final int MSG_LONG_PRESS_BRIGHTNESS_CHANGE = 1004;
     // 1020-1040 reserved for BaseStatusBar
 
     /**
@@ -319,6 +329,10 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
     public static final boolean ENABLE_LOCKSCREEN_WALLPAPER = true;
 
     private static final UiEventLogger sUiEventLogger = new UiEventLoggerImpl();
+
+    private static final float BRIGHTNESS_CONTROL_PADDING = 0.15f;
+    private static final int BRIGHTNESS_CONTROL_LONG_PRESS_TIMEOUT = 750; // ms
+    private static final int BRIGHTNESS_CONTROL_LINGER_THRESHOLD = 20;
 
     private final Context mContext;
     private final LockscreenShadeTransitionController mLockscreenShadeTransitionController;
@@ -529,6 +543,19 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
     private GameSpaceManager mGameSpaceManager;
 
     private CentralSurfacesComponent mCentralSurfacesComponent;
+
+    private DisplayManager mDisplayManager;
+
+    private float mMinimumBacklight;
+    private float mMaximumBacklight;
+    private int mInitialTouchX;
+    private int mInitialTouchY;
+    private int mLinger;
+    private int mQuickQsOffsetHeight;
+    private boolean mBrightnessChanged;
+    private boolean mBrightnessControl;
+    private boolean mJustPeeked;
+    private float mCurrentBrightness;
 
     /**
      * This keeps track of whether we have (or haven't) registered the predictive back callback.
@@ -945,6 +972,8 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
                 data -> mCommandQueueCallbacks.animateExpandSettingsPanel(data.mSubpanel));
         mMessageRouter.subscribeTo(MSG_LAUNCH_TRANSITION_TIMEOUT,
                 id -> onLaunchTransitionTimeout());
+        mMessageRouter.subscribeTo(MSG_LONG_PRESS_BRIGHTNESS_CHANGE,
+                id -> onLongPressBrightnessChange());
 
         mDeviceStateManager = deviceStateManager;
         wiredChargingRippleController.registerCallbacks();
@@ -986,6 +1015,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
         mKeyguardIndicationController.init();
 
         mColorExtractor.addOnColorsChangedListener(mOnColorsChangedListener);
+        mDisplayManager = mContext.getSystemService(DisplayManager.class);
 
         mNeedsNavigationBar = mContext.getResources().getBoolean(
                 com.android.internal.R.bool.config_showNavigationBar);
@@ -1000,6 +1030,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
 
         mTunerService.addTunable(this, FORCE_SHOW_NAVBAR);
         mTunerService.addTunable(this, QS_TRANSPARENCY);
+        mTunerService.addTunable(this, STATUS_BAR_BRIGHTNESS_CONTROL);
 
         mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
 
@@ -1287,6 +1318,11 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
         getNotificationShadeWindowView().setOnTouchListener(getStatusBarWindowTouchListener());
         mWallpaperController.setRootView(getNotificationShadeWindowView());
 
+        mMinimumBacklight = mPowerManager.getBrightnessConstraint(
+                PowerManager.BRIGHTNESS_CONSTRAINT_TYPE_MINIMUM);
+        mMaximumBacklight = mPowerManager.getBrightnessConstraint(
+                PowerManager.BRIGHTNESS_CONSTRAINT_TYPE_MAXIMUM);
+
         // TODO: Deal with the ugliness that comes from having some of the status bar broken out
         // into fragments, but the rest here, it leaves some awkward lifecycle and whatnot.
         if (!mFeatureFlags.isEnabled(Flags.NOTIFICATION_SHELF_REFACTOR)) {
@@ -1317,6 +1353,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
                     setBouncerShowingForStatusBarComponents(mBouncerShowing);
                     checkBarModes();
                     mBurnInProtectionController.setPhoneStatusBarView(mStatusBarView);
+                    mPhoneStatusBarViewController.setBrightnessControlEnabled(mBrightnessControl);
                 });
         mStatusBarInitializer.initializeStatusBar(
                 mCentralSurfacesComponent::createCollapsedStatusBarFragment);
@@ -1858,6 +1895,92 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
     @Override
     public void onStatusBarTrackpadEvent(MotionEvent event) {
         mShadeSurface.handleExternalTouch(event);
+    }
+
+    private void adjustBrightness(int x) {
+        mBrightnessChanged = true;
+        float raw = ((float) x) / getDisplayWidth();
+
+        // Add a padding to the brightness control on both sides to
+        // make it easier to reach min/max brightness
+        float padded = Math.min(1.0f - BRIGHTNESS_CONTROL_PADDING,
+                Math.max(BRIGHTNESS_CONTROL_PADDING, raw));
+        float value = (padded - BRIGHTNESS_CONTROL_PADDING) /
+                (1 - (2.0f * BRIGHTNESS_CONTROL_PADDING));
+        final float val = convertGammaToLinearFloat(
+                Math.round(value * GAMMA_SPACE_MAX),
+                mMinimumBacklight, mMaximumBacklight);
+        mCurrentBrightness = val;
+        mDisplayManager.setTemporaryBrightness(mDisplayId, val);
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                Settings.System.putFloatForUser(mContext.getContentResolver(),
+                        Settings.System.SCREEN_BRIGHTNESS_FLOAT, val,
+                        UserHandle.USER_CURRENT);
+            }
+        });
+    }
+
+    @Override
+    public void brightnessControl(MotionEvent event) {
+        final int action = event.getAction();
+        final int x = (int) event.getRawX();
+        final int y = (int) event.getRawY();
+        mQuickQsOffsetHeight = mContext.getResources().getDimensionPixelSize(
+                com.android.internal.R.dimen.quick_qs_offset_height);
+        if (action == MotionEvent.ACTION_DOWN) {
+            if (y < mQuickQsOffsetHeight) {
+                mLinger = 0;
+                mInitialTouchX = x;
+                mInitialTouchY = y;
+                mJustPeeked = true;
+                mMessageRouter.cancelMessages(MSG_LONG_PRESS_BRIGHTNESS_CHANGE);
+                mMessageRouter.sendMessageDelayed(MSG_LONG_PRESS_BRIGHTNESS_CHANGE,
+                        BRIGHTNESS_CONTROL_LONG_PRESS_TIMEOUT);
+            }
+        } else if (action == MotionEvent.ACTION_MOVE) {
+            if (y < mQuickQsOffsetHeight && mJustPeeked) {
+                if (mLinger > BRIGHTNESS_CONTROL_LINGER_THRESHOLD) {
+                    adjustBrightness(x);
+                } else {
+                    final int xDiff = Math.abs(x - mInitialTouchX);
+                    final int yDiff = Math.abs(y - mInitialTouchY);
+                    final int touchSlop = ViewConfiguration.get(mContext).getScaledTouchSlop();
+                    if (xDiff > yDiff) {
+                        mLinger++;
+                    }
+                    if (xDiff > touchSlop || yDiff > touchSlop) {
+                        mMessageRouter.cancelMessages(MSG_LONG_PRESS_BRIGHTNESS_CHANGE);
+                    }
+                }
+            } else {
+                if (y > mQuickQsOffsetHeight) {
+                    mJustPeeked = false;
+                }
+                mMessageRouter.cancelMessages(MSG_LONG_PRESS_BRIGHTNESS_CHANGE);
+            }
+        } else if (action == MotionEvent.ACTION_UP
+                || action == MotionEvent.ACTION_CANCEL) {
+            mMessageRouter.cancelMessages(MSG_LONG_PRESS_BRIGHTNESS_CHANGE);
+        }
+    }
+
+    @Override
+    public void onBrightnessChanged(boolean upOrCancel) {
+        if (mBrightnessChanged && upOrCancel) {
+            mBrightnessChanged = false;
+            if (mJustPeeked && mShadeController.isExpandedVisible()) {
+                getNotificationShadeWindowViewController().fling(10, false, false);
+            }
+            mDisplayManager.setBrightness(mDisplayId, mCurrentBrightness);
+        }
+    }
+
+    void onLongPressBrightnessChange() {
+        mStatusBarView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+        adjustBrightness(mInitialTouchX);
+        mLinger = BRIGHTNESS_CONTROL_LINGER_THRESHOLD + 1;
     }
 
     private void onExpandedInvisible() {
@@ -3551,6 +3674,12 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
             case QS_TRANSPARENCY:
                 mScrimController.setCustomScrimAlpha(
                         TunerService.parseInteger(newValue, 85));
+                break;
+            case STATUS_BAR_BRIGHTNESS_CONTROL:
+                mBrightnessControl =
+                        TunerService.parseIntegerSwitch(newValue, false);
+                if (mPhoneStatusBarViewController != null)
+                    mPhoneStatusBarViewController.setBrightnessControlEnabled(mBrightnessControl);
                 break;
             default:
                 break;
