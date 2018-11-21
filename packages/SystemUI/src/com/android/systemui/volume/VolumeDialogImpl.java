@@ -175,6 +175,8 @@ public class VolumeDialogImpl implements VolumeDialog, Dumpable,
             "customsecure:" + Settings.Secure.VOLUME_PANEL_ON_LEFT;
     public static final String CUSTOM_VOLUME_STYLES =
             "system:" + "custom_volume_styles";
+    public static final String VOLUME_DIALOG_TIMEOUT =
+            "system:" + Settings.System.VOLUME_DIALOG_TIMEOUT;
 
     private static final long USER_ATTEMPT_GRACE_PERIOD = 1000;
     private static final int UPDATE_ANIMATION_DURATION = 80;
@@ -351,6 +353,8 @@ public class VolumeDialogImpl implements VolumeDialog, Dumpable,
     private int customVolumeStyles = 0;
     private ThemeUtils mThemeUtils;
 
+    private int mTimeOutDesired, mTimeOut;
+
     public VolumeDialogImpl(
             Context context,
             VolumeDialogController volumeDialogController,
@@ -419,6 +423,7 @@ public class VolumeDialogImpl implements VolumeDialog, Dumpable,
         }
         mTunerService.addTunable(mTunable, CUSTOM_VOLUME_STYLES);
         mThemeUtils = new ThemeUtils(mContext);
+        mTunerService.addTunable(mTunable, VOLUME_DIALOG_TIMEOUT);
 
         initDimens();
 
@@ -874,6 +879,10 @@ public class VolumeDialogImpl implements VolumeDialog, Dumpable,
                         mVolumePanelOnLeft = volumePanelOnLeft;
                         mHandler.post(mControllerCallbackH::onConfigurationChanged);
                     }
+                    break;
+                case VOLUME_DIALOG_TIMEOUT:
+                    mTimeOutDesired = TunerService.parseInteger(newValue, 3);
+                    mTimeOut = mTimeOutDesired * 1000;
                     break;
                case CUSTOM_VOLUME_STYLES:
                     final int selectedVolStyle = TunerService.parseInteger(newValue, 2);
@@ -1873,8 +1882,7 @@ public class VolumeDialogImpl implements VolumeDialog, Dumpable,
                     AccessibilityManager.FLAG_CONTENT_TEXT
                             | AccessibilityManager.FLAG_CONTENT_CONTROLS);
         }
-        return mAccessibilityMgr.getRecommendedTimeoutMillis(DIALOG_TIMEOUT_MILLIS,
-                AccessibilityManager.FLAG_CONTENT_CONTROLS);
+        return mTimeOut;
     }
 
     protected void scheduleCsdTimeoutH(int timeoutMs) {

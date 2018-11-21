@@ -6668,6 +6668,12 @@ public final class Settings {
         public static final String LOCKSCREEN_WEATHER_LOCATION = "lockscreen_weather_location";
 
         /**
+         * Volume dialog timeout. Value in seconds
+         * @hide
+         */
+        public static final String VOLUME_DIALOG_TIMEOUT = "volume_dialog_timeout";
+
+        /**
          * @hide
          */
         public static final String LOCKSCREEN_WEATHER_TEXT = "lockscreen_weather_text";
