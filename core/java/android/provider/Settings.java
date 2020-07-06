@@ -6909,6 +6909,12 @@ public final class Settings {
         public static final String QS_UI_STYLE = "qs_ui_style";
 
         /**
+         * Whether StatusBar icons should use app icon
+         * @hide
+         */
+        public static final String STATUSBAR_COLORED_ICONS = "statusbar_colored_icons";
+
+        /**
          * @hide
          */
         public static final String QS_TILE_LABEL_SIZE = "qs_tile_label_size";
