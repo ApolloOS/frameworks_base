@@ -240,4 +240,6 @@ interface IStatusBarService
      * ApolloOS additions
      */
     void toggleCameraFlash();
+
+    void screenPinningStateChanged(boolean enabled);
 }
