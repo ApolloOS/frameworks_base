@@ -21,4 +21,7 @@
     <dimen name="custom_qs_panel_padding_top">0dp</dimen>
     <dimen name="custom_notification_row_padding">16dp</dimen>
     <dimen name="custom_qs_tile_label_line_height">20sp</dimen>
+
+    <!-- Maximum vertical offset of statusbar for burn-in protection -->
+    <dimen name="status_bar_offset_max_y">4dp</dimen>
 </resources>
