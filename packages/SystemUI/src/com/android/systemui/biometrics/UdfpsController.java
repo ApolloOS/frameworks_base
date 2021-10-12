@@ -614,6 +614,11 @@ public class UdfpsController implements DozeReceiver, Dumpable {
         }
 
         return mActivePointerId != MotionEvent.INVALID_POINTER_ID;
+        final int idx = mActivePointerId == -1
+                ? event.getPointerId(0)
+                : event.findPointerIndex(mActivePointerId);
+        onFingerDown(requestId, (int) event.getRawX(), (int) event.getRawY(),
+                (int) event.getTouchMinor(idx), (int) event.getTouchMajor(idx));
     }
 
     private boolean shouldTryToDismissKeyguard() {
