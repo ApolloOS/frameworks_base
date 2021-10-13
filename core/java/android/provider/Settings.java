@@ -6928,6 +6928,13 @@ public final class Settings {
                 "lockscreen_scramble_pin_layout";
 
         /**
+         * Whether to use the custom quick unlock screen control
+         * @hide
+         */
+        public static final String LOCKSCREEN_QUICK_UNLOCK_CONTROL =
+                "lockscreen_quick_unlock_control";
+
+        /**
          * These are all public system settings
          *
          * @hide

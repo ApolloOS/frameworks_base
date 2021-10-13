@@ -88,6 +88,16 @@ public class PasswordTextView extends BasePasswordTextView {
     private Interpolator mAppearInterpolator;
     private Interpolator mDisappearInterpolator;
     private Interpolator mFastOutSlowInInterpolator;
+    private QuickUnlockListener mQuickUnlockListener;
+
+    /* Quick unlock management for PIN view. */
+    public interface QuickUnlockListener {
+        /**
+         * Validate current password and prepare callback if verified.
+         * @param password The password string to be verified.
+         */
+        void onValidateQuickUnlock(String password);
+    }
 
     public PasswordTextView(Context context) {
         this(context, null);
@@ -322,6 +332,10 @@ public class PasswordTextView extends BasePasswordTextView {
             stringBuilder.append(charState.isCharVisibleForA11y() ? charState.whichChar : DOT);
         }
         return stringBuilder;
+    }
+
+    public void setQuickUnlockListener(QuickUnlockListener listener) {
+        mQuickUnlockListener = listener;
     }
 
     private class CharState {
