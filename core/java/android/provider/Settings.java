@@ -6572,6 +6572,11 @@ public final class Settings {
         public static final String LOCK_GESTURE_STATUS = "lock_gesture_status";
 
         /**
+         * @hide
+         */
+        public static final String QS_TRANSPARENCY = "qs_transparency";
+
+        /**
          * Whether allowing pocket service to register sensors and dispatch informations.
          *   0 = disabled
          *   1 = enabled
