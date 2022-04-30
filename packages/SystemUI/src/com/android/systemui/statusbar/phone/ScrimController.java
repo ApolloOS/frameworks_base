@@ -388,6 +388,12 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
             mScrimBehindChangeRunnable = null;
         }
 
+        if (mScrimBehind != null) {
+            mCustomScrimAlpha = (Settings.System.getFloatForUser(
+                mScrimBehind.getContext().getContentResolver(),
+                Settings.System.QS_TRANSPARENCY, 100,
+                UserHandle.USER_CURRENT) / 100);
+        }
         final ScrimState[] states = ScrimState.values();
         for (int i = 0; i < states.length; i++) {
             states[i].init(mScrimInFront, mScrimBehind, mDozeParameters, mDockManager);
