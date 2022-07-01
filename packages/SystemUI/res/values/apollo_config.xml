@@ -32,4 +32,8 @@
     <integer name="qs_panel_num_columns">2</integer>
     <integer name="qs_panel_num_columns_landscape">4</integer>
     <integer name="qs_panel_num_columns_media">2</integer>
+
+    <!-- Charging info current divider, if needed -->
+    <integer name="config_currentInfoDivider" translatable="false">1000</integer>
+
 </resources>
