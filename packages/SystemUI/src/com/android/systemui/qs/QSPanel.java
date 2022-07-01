@@ -54,6 +54,7 @@ import androidx.annotation.VisibleForTesting;
 
 import com.android.internal.logging.UiEventLogger;
 import com.android.internal.widget.RemeasuringLinearLayout;
+import com.android.systemui.Dependency;
 import com.android.systemui.R;
 import com.android.systemui.plugins.qs.QSTile;
 import com.android.systemui.plugins.qs.QSTileView;
@@ -156,6 +157,9 @@ public class QSPanel extends LinearLayout implements Tunable {
 
         mIsAutomaticBrightnessAvailable = getResources().getBoolean(
                 com.android.internal.R.bool.config_automatic_brightness_available);
+
+        TunerService tunerService = Dependency.get(TunerService.class);
+        mTop = tunerService.getValue(QS_BRIGHTNESS_SLIDER_POSITION, 0) == 0;
     }
 
     void initialize(QSLogger qsLogger) {
@@ -217,7 +221,7 @@ public class QSPanel extends LinearLayout implements Tunable {
         }
         mBrightnessView = view;
         mAutoBrightnessView = view.findViewById(R.id.brightness_icon);
-        setBrightnessViewMargin(true);
+        setBrightnessViewMargin(mTop);
         if (mBrightnessView != null) {
             addView(mBrightnessView);
             mMovableContentStartIndex++;
