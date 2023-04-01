@@ -6745,6 +6745,11 @@ public final class Settings {
         public static final String QS_SHOW_AUTO_BRIGHTNESS = "qs_show_auto_brightness";
 
         /**
+         * @hide
+         */
+        public static final String QS_PANEL_STYLE = "qs_panel_style";
+
+        /**
          * These are all public system settings
          *
          * @hide
