@@ -137,8 +137,10 @@ public class QSAnimator implements QSHost.Callback, PagedTileLayout.PageListener
     private float mLastPosition;
     private final QSHost mHost;
     private final Executor mExecutor;
+    private final TunerService mTunerService;
     private boolean mShowCollapsedOnKeyguard;
     private int mQQSTop;
+    private boolean isA11Style;
 
     private int[] mTmpLoc1 = new int[2];
     private int[] mTmpLoc2 = new int[2];
@@ -156,6 +158,7 @@ public class QSAnimator implements QSHost.Callback, PagedTileLayout.PageListener
         mQuickStatusBarHeader = quickStatusBarHeader;
         mHost = qsTileHost;
         mExecutor = executor;
+        mTunerService = tunerService;
         mQSExpansionPathInterpolator = qsExpansionPathInterpolator;
         mHost.addCallback(this);
         mQsPanelController.addOnAttachStateChangeListener(this);
@@ -170,6 +173,7 @@ public class QSAnimator implements QSHost.Callback, PagedTileLayout.PageListener
             Log.w(TAG, "QS Not using page layout");
         }
         mQsPanelController.setPageListener(this);
+        isA11Style = mTunerService.getValue(QSPanel.QS_UI_STYLE, 0) == 1;
     }
 
     public void onRtlChanged() {
@@ -346,8 +350,8 @@ public class QSAnimator implements QSHost.Callback, PagedTileLayout.PageListener
 
                     // Icons
                     translateContent(
-                            quickTileView.getIcon(),
-                            tileView.getIcon(),
+                            isA11Style ? quickTileView.getIconWithBackground() : quickTileView.getIcon(),
+                            isA11Style ? tileView.getIconWithBackground() : tileView.getIcon(),
                             view,
                             xOffset,
                             yOffset,
@@ -389,13 +393,13 @@ public class QSAnimator implements QSHost.Callback, PagedTileLayout.PageListener
                     // Therefore, we use a quadratic interpolator animator to animate the alpha
                     // for tiles in QQS to match.
                     quadraticInterpolatorBuilder
-                            .addFloat(quickTileView.getSecondaryLabel(), "alpha", 0, 1);
+                            .addFloat(isA11Style ? quickTileView.getLabelContainer() : quickTileView.getSecondaryLabel(), "alpha", 0, 1);
                     nonFirstPageAlphaBuilder
-                            .addFloat(quickTileView.getSecondaryLabel(), "alpha", 0, 0);
+                            .addFloat(isA11Style ? quickTileView.getLabelContainer() : quickTileView.getSecondaryLabel(), "alpha", 0, 0);
 
                     mAnimatedQsViews.add(tileView);
                     mAllViews.add(quickTileView);
-                    mAllViews.add(quickTileView.getSecondaryLabel());
+                    mAllViews.add(isA11Style ? quickTileView.getLabelContainer() : quickTileView.getSecondaryLabel());
                 } else if (!isIconInAnimatedRow(count)) {
                     // Pretend there's a corresponding QQS tile (for the position) that we are
                     // expanding from.
@@ -414,8 +418,8 @@ public class QSAnimator implements QSHost.Callback, PagedTileLayout.PageListener
                     mOtherFirstPageTilesHeightAnimator.addView(tileView);
                     tileView.setClipChildren(true);
                     tileView.setClipToPadding(true);
-                    firstPageBuilder.addFloat(tileView.getSecondaryLabel(), "alpha", 0, 1);
-                    mAllViews.add(tileView.getSecondaryLabel());
+                    firstPageBuilder.addFloat(isA11Style ? tileView.getLabelContainer() : tileView.getSecondaryLabel(), "alpha", 0, 1);
+                    mAllViews.add(isA11Style ? tileView.getLabelContainer() : tileView.getSecondaryLabel());
                 }
 
                 QSTileView quickTileView = mQuickQSPanelController.getTileView(tile);
