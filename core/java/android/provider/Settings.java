@@ -6639,6 +6639,12 @@ public final class Settings {
          */
         public static final String LOCKSCREEN_WEATHER_TEXT = "lockscreen_weather_text";
 
+	/**
+         * Whether to enable smart 5G mode
+         * @hide
+         */
+        public static final String SMART_5G = "smart_5g";
+
         /**
          * Whether to display cross sign for a data disabled connection
          * @hide
