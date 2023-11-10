@@ -443,7 +443,8 @@ public class VolumeDialogImpl implements VolumeDialog, Dumpable,
         final boolean isTabletop = isPortrait && isHalfOpen;
         mOriginalGravity = mContext.getResources().getInteger(R.integer.volume_dialog_gravity);
         if (!mShowActiveStreamOnly) {
-            // Clear the pre-defined gravity for left or right, this is handled by mVolumePanelOnLeft
+            // Clear the pre-defined gravity for left or right,
+            // this is handled by mVolumePanelOnLeft
             mOriginalGravity &= ~(Gravity.LEFT | Gravity.RIGHT);
             mOriginalGravity |= mVolumePanelOnLeft ? Gravity.LEFT : Gravity.RIGHT;
         }
