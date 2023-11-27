@@ -6750,6 +6750,11 @@ public final class Settings {
         public static final String QS_PANEL_STYLE = "qs_panel_style";
 
         /**
+         * @hide
+         */
+        public static final String QS_FOOTER_TRANSPARENCY = "qs_footer_transparency";
+
+        /**
          * These are all public system settings
          *
          * @hide
