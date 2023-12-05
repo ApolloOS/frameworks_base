@@ -106,6 +106,8 @@ public class NotificationMediaManager implements Dumpable{
             "system:lockscreen_media_metadata";
     private static final String ISLAND_NOTIFICATION =
             "system:island_notification";
+    private static final String ISLAND_NOTIFICATION_NOW_PLAYING =
+            "system:island_notification_now_playing";
 
     private final StatusBarStateController mStatusBarStateController;
     private final SysuiColorExtractor mColorExtractor;
@@ -169,6 +171,7 @@ public class NotificationMediaManager implements Dumpable{
 
     private boolean mShowMediaMetadata;
     private boolean mIslandEnabled;
+    private boolean mIslandNowPlayingEnabled;
     private NotificationUtils notifUtils;
 
     private final MediaController.Callback mMediaListener = new MediaController.Callback() {
@@ -179,7 +182,7 @@ public class NotificationMediaManager implements Dumpable{
                 Log.v(TAG, "DEBUG_MEDIA: onPlaybackStateChanged: " + state);
             }
             if (state != null) {
-                if (mIslandEnabled) {
+                if (mIslandEnabled && mIslandNowPlayingEnabled) {
                     if (PlaybackState.STATE_PLAYING == getMediaControllerPlaybackState(mMediaController) && mMediaMetadata != null) {
                         notifUtils.showNowPlayingNotification(mMediaMetadata);
                     } else {
@@ -201,7 +204,7 @@ public class NotificationMediaManager implements Dumpable{
             }
             mMediaArtworkProcessor.clearCache();
             mMediaMetadata = metadata;
-            if (mIslandEnabled) {
+            if (mIslandEnabled && mIslandNowPlayingEnabled) {
                 notifUtils.cancelNowPlayingNotification();
                 notifUtils.showNowPlayingNotification(metadata);
             }
@@ -272,6 +275,9 @@ public class NotificationMediaManager implements Dumpable{
                     break;
                 case ISLAND_NOTIFICATION:
                     mIslandEnabled = TunerService.parseIntegerSwitch(newValue, true);
+                    break;
+                case ISLAND_NOTIFICATION_NOW_PLAYING:
+                    mIslandNowPlayingEnabled = TunerService.parseIntegerSwitch(newValue, true);
                     break;
                 default:
                     break;
