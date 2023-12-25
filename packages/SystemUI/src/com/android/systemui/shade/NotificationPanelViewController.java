@@ -4652,7 +4652,7 @@ public final class NotificationPanelViewController implements ShadeSurface, Dump
         @Override
         public void onTuningChanged(String key, String newValue) {
             if (ISLAND_NOTIFICATION.equals(key)) {
-                mUseIslandNotification = TunerService.parseIntegerSwitch(newValue, true);
+                mUseIslandNotification = TunerService.parseIntegerSwitch(newValue, false);
                 mNotifIsland.setIslandEnabled(mUseIslandNotification);
             } else if (DOUBLE_TAP_SLEEP_GESTURE.equals(key)) {
                 mDoubleTapToSleepEnabled = TunerService.parseIntegerSwitch(newValue, true);
