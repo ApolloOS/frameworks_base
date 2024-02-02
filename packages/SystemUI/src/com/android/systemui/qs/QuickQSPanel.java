@@ -16,11 +16,8 @@
 
 package com.android.systemui.qs;
 
-import static com.android.systemui.util.qs.QSStyleUtils.isRoundQS;
-
 import android.content.Context;
 import android.content.res.Configuration;
-import android.provider.Settings;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -42,37 +39,18 @@ public class QuickQSPanel extends QSPanel {
     // A fallback value for max tiles number when setting via Tuner (parseNumTiles)
     public static final int TUNER_MAX_TILES_FALLBACK = 6;
 
-    // Tile Columns on normal conditions
-    public int mMaxColumnsPortrait = 5;
-    public int mMaxColumnsLandscape = 6;
-    // Tile Columns when media player is visible
-    public int mMaxColumnsMediaPlayer = 4;
-
     private boolean mDisabledByPolicy;
     private int mMaxTiles;
 
     public QuickQSPanel(Context context, AttributeSet attrs) {
         super(context, attrs);
         mMaxTiles = getResources().getInteger(R.integer.quick_qs_panel_max_tiles);
-        mMaxColumnsPortrait = getResources().getInteger(R.integer.quick_qs_panel_num_columns);
-        mMaxColumnsLandscape = getResources().getInteger(R.integer.quick_qs_panel_num_columns_landscape);
-        mMaxColumnsMediaPlayer = getResources().getInteger(R.integer.quick_qs_panel_num_columns_media);
-        if (isRoundQS()) {
-            mMaxColumnsPortrait = Settings.Secure.getInt(context.getContentResolver(),
-                    Settings.Secure.QQS_NUM_COLUMNS, mMaxColumnsPortrait);
-            mMaxColumnsLandscape = Settings.Secure.getInt(context.getContentResolver(),
-                    Settings.Secure.QQS_NUM_COLUMNS_LANDSCAPE, mMaxColumnsLandscape);
-
-            mMaxTiles = Math.max(mMaxColumnsPortrait, mMaxColumnsLandscape);
-            mMaxTiles = Math.max(mMaxColumnsMediaPlayer, mMaxTiles);
-        }
     }
 
     @Override
     protected void setHorizontalContentContainerClipping() {
         mHorizontalContentContainer.setClipToPadding(false);
         mHorizontalContentContainer.setClipChildren(false);
-        updateColumns();
     }
 
     @Override
@@ -124,18 +102,6 @@ public class QuickQSPanel extends QSPanel {
             state = copy;
         }
         super.drawTile(r, state);
-    }
-
-    public void updateColumns() {
-        boolean isLandscape = getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE;
-
-        int mColumnsMediaPlayer = mUsingHorizontalLayout ?
-            mMaxColumnsMediaPlayer :
-            mMaxColumnsLandscape;
-
-        mTileLayout.setMaxColumns(isLandscape ?
-            mColumnsMediaPlayer :
-            mMaxColumnsPortrait);
     }
 
     public void setMaxTiles(int maxTiles) {
@@ -228,7 +194,7 @@ public class QuickQSPanel extends QSPanel {
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT,
                     LayoutParams.WRAP_CONTENT);
             setLayoutParams(lp);
-            setMaxColumns(6);
+            setMaxColumns(4);
         }
 
         @Override

@@ -307,8 +307,6 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
 
     private static final String FORCE_SHOW_NAVBAR =
             "customsystem:" + Settings.System.FORCE_SHOW_NAVBAR;
-    private static final String QS_TRANSPARENCY =
-            "customsystem:" + Settings.System.QS_TRANSPARENCY;
     private static final String STATUS_BAR_BRIGHTNESS_CONTROL =
             "system:" + Settings.System.STATUS_BAR_BRIGHTNESS_CONTROL;
 
@@ -1037,7 +1035,6 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
         }
 
         mTunerService.addTunable(this, FORCE_SHOW_NAVBAR);
-        mTunerService.addTunable(this, QS_TRANSPARENCY);
         mTunerService.addTunable(this, STATUS_BAR_BRIGHTNESS_CONTROL);
 
         mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
@@ -3689,10 +3686,6 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces, Tune
             }
         }
         switch (key) {
-            case QS_TRANSPARENCY:
-                mScrimController.setCustomScrimAlpha(
-                        TunerService.parseInteger(newValue, 85));
-                break;
             case STATUS_BAR_BRIGHTNESS_CONTROL:
                 mBrightnessControl =
                         TunerService.parseIntegerSwitch(newValue, false);

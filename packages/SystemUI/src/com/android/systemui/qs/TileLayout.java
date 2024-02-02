@@ -1,7 +1,6 @@
 package com.android.systemui.qs;
 
 import static com.android.systemui.util.Utils.useQsMediaPlayer;
-import static com.android.systemui.util.qs.QSStyleUtils.isRoundQS;
 
 import android.content.Context;
 import android.content.res.Resources;
@@ -101,11 +100,6 @@ public class TileLayout extends ViewGroup implements QSTileLayout {
         return updateColumns();
     }
 
-    @Override
-    public int getMaxColumns() {
-        return mMaxColumns;
-    }
-
     public void addTile(TileRecord tile) {
         mRecords.add(tile);
         tile.tile.setListening(this, mListening);
@@ -133,7 +127,7 @@ public class TileLayout extends ViewGroup implements QSTileLayout {
 
     public boolean updateResources() {
         Resources res = getResources();
-        mResourceColumns = Math.max(1, res.getInteger(R.integer.quick_qs_panel_max_tiles));
+        mResourceColumns = Math.max(1, res.getInteger(R.integer.quick_settings_num_columns));
         mResourceCellHeight = res.getDimensionPixelSize(mResourceCellHeightResId);
         mCellMarginHorizontal = res.getDimensionPixelSize(R.dimen.qs_tile_margin_horizontal);
         mSidePadding = useSidePadding() ? mCellMarginHorizontal / 2 : 0;
@@ -156,12 +150,9 @@ public class TileLayout extends ViewGroup implements QSTileLayout {
         return true;
     }
 
-    public boolean updateColumns() {
+    private boolean updateColumns() {
         int oldColumns = mColumns;
-        if (isRoundQS())
-            mColumns = mMaxColumns;
-        else
-            mColumns = Math.min(mResourceColumns, mMaxColumns);
+        mColumns = Math.min(mResourceColumns, mMaxColumns);
         return oldColumns != mColumns;
     }
 

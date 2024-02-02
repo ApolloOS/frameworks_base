@@ -6282,11 +6282,6 @@ public final class Settings {
         public static final String VOLUME_ANSWER_CALL = "volume_answer_call";
 
         /**
-         * @hide
-         */
-        public static final String QS_TRANSPARENCY = "qs_transparency";
-
-        /**
          * whether to enable or disable vibration on succesful fingerprint auth
          *
          * @hide
@@ -12922,42 +12917,6 @@ public final class Settings {
          * @hide
          */
         public static final String SHOW_CLIPBOARD_OVERLAY = "show_clipboard_overlay";
-
-        /**
-         * Quicksettings tile shape
-         * @hide
-         */
-        public static final String QS_TILE_SHAPE = "qs_tile_shape";
-
-        /**
-         * Quicksettings UI Style
-         * @hide
-         */
-        public static final String QS_STYLE_ROUND = "qs_style_round";
-
-        /**
-         * Quicksettings columns
-         * @hide
-         */
-        public static final String QS_NUM_COLUMNS = "qs_num_columns";
-
-        /**
-         * Quicksettings columns landscape
-         * @hide
-         */
-        public static final String QS_NUM_COLUMNS_LANDSCAPE = "qs_num_columns_landscape";
-
-        /**
-         * Quick QS columns
-         * @hide
-         */
-        public static final String QQS_NUM_COLUMNS = "qqs_num_columns";
-
-        /**
-         * Quick QS columns landscape
-         * @hide
-         */
-        public static final String QQS_NUM_COLUMNS_LANDSCAPE = "qqs_num_columns_landscape";
 
         /**
          * Whether to show daily data usage in the QS footer.
