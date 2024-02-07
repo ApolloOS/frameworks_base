@@ -59,7 +59,6 @@ import com.android.systemui.bouncer.shared.constants.KeyguardBouncerConstants;
 import com.android.systemui.dagger.SysUISingleton;
 import com.android.systemui.dagger.qualifiers.Main;
 import com.android.systemui.dock.DockManager;
-import com.android.systemui.tuner.TunerService;
 import com.android.systemui.keyguard.KeyguardUnlockAnimationController;
 import com.android.systemui.keyguard.domain.interactor.KeyguardTransitionInteractor;
 import com.android.systemui.keyguard.shared.model.ScrimAlpha;
@@ -94,16 +93,13 @@ import kotlinx.coroutines.CoroutineDispatcher;
  */
 @SysUISingleton
 public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dumpable,
-        CoreStartable, TunerService.Tunable {
+        CoreStartable {
 
     static final String TAG = "ScrimController";
     private static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
 
     // debug mode colors scrims with below debug colors, irrespectively of which state they're in
     public static final boolean DEBUG_MODE = false;
-
-    private static final String QS_DUAL_TONE =
-            "system:" + Settings.System.QS_DUAL_TONE;
 
     public static final int DEBUG_NOTIFICATIONS_TINT = Color.RED;
     public static final int DEBUG_FRONT_TINT = Color.GREEN;
@@ -223,7 +219,6 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
     private final StatusBarKeyguardViewManager mStatusBarKeyguardViewManager;
 
     private GradientColors mColors;
-    private GradientColors mBehindColors;
     private boolean mNeedsDrawableColorUpdate;
 
     private float mAdditionalScrimBehindAlphaKeyguard = 0f;
@@ -277,9 +272,6 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
     private boolean mWakeLockHeld;
     private boolean mKeyguardOccluded;
 
-    private final TunerService mTunerService;
-    private boolean mUseDualToneColor;
-
     private KeyguardTransitionInteractor mKeyguardTransitionInteractor;
     private final WallpaperRepository mWallpaperRepository;
     private CoroutineDispatcher mMainDispatcher;
@@ -319,8 +311,7 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
             KeyguardTransitionInteractor keyguardTransitionInteractor,
             WallpaperRepository wallpaperRepository,
             @Main CoroutineDispatcher mainDispatcher,
-            LargeScreenShadeInterpolator largeScreenShadeInterpolator,
-            TunerService tunerService) {
+            LargeScreenShadeInterpolator largeScreenShadeInterpolator) {
         mScrimStateListener = lightBarController::setScrimState;
         mLargeScreenShadeInterpolator = largeScreenShadeInterpolator;
         mDefaultScrimAlpha = BUSY_SCRIM_ALPHA;
@@ -365,8 +356,6 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
         mKeyguardTransitionInteractor = keyguardTransitionInteractor;
         mWallpaperRepository = wallpaperRepository;
         mMainDispatcher = mainDispatcher;
-        mBehindColors = new GradientColors();
-        mTunerService = tunerService;
     }
 
     @Override
@@ -444,21 +433,6 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
                 mPrimaryBouncerToGoneTransition, mMainDispatcher);
         collectFlow(behindScrim, mPrimaryBouncerToGoneTransitionViewModel.getScrimAlpha(),
                 mScrimAlphaConsumer, mMainDispatcher);
-
-        mTunerService.addTunable(this, QS_DUAL_TONE);
-    }
-
-    @Override
-    public void onTuningChanged(String key, String newValue) {
-        switch (key) {
-            case QS_DUAL_TONE:
-            	mUseDualToneColor =
-                    TunerService.parseIntegerSwitch(newValue, true);
-                ScrimController.this.onThemeChanged();
-                break;
-            default:
-                break;
-         }
     }
 
     // TODO(b/270984686) recompute scrim height accurately, based on shade contents.
@@ -978,7 +952,7 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
                 mNotificationsAlpha = behindAlpha;
                 mNotificationsTint = behindTint;
                 mBehindAlpha = mCustomScrimAlpha;
-                mBehindTint = Color.TRANSPARENT;
+                mBehindTint = Color.BLACK;
             } else {
                 mBehindAlpha = behindAlpha;
                 if (mState == ScrimState.KEYGUARD && mTransitionToFullShadeProgress > 0.0f) {
@@ -1166,7 +1140,7 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
                     && !mBlankScreen;
 
             mScrimInFront.setColors(mColors, animateScrimInFront);
-            mScrimBehind.setColors(mBehindColors, animateBehindScrim);
+            mScrimBehind.setColors(mColors, animateBehindScrim);
             mNotificationsScrim.setColors(mColors, animateScrimNotifications);
 
             dispatchBackScrimState(mScrimBehind.getViewAlpha());
@@ -1531,10 +1505,7 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
         if (mScrimBehind == null) return;
         int background = Utils.getColorAttr(mScrimBehind.getContext(),
                 android.R.attr.colorBackgroundFloating).getDefaultColor();
-        int surfaceBackground = Utils.getColorAttr(mScrimBehind.getContext(),
-                com.android.internal.R.attr.colorSurfaceHeader).getDefaultColor();
         int accent = Utils.getColorAccent(mScrimBehind.getContext()).getDefaultColor();
-
         mColors.setMainColor(background);
         mColors.setSecondaryColor(accent);
         final boolean isBackgroundLight = !ContrastColorUtil.isColorDark(background);
@@ -1545,11 +1516,6 @@ public class ScrimController implements ViewTreeObserver.OnPreDrawListener, Dump
         for (ScrimState state : ScrimState.values()) {
             state.setSurfaceColor(surface);
         }
-
-        mBehindColors.setMainColor(mUseDualToneColor ? surfaceBackground : background);
-        mBehindColors.setSecondaryColor(accent);
-        mBehindColors.setSupportsDarkText(
-                ColorUtils.calculateContrast(mBehindColors.getMainColor(), Color.WHITE) > 4.5);
 
         mNeedsDrawableColorUpdate = true;
     }

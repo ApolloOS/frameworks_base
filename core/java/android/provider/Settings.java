@@ -6788,12 +6788,6 @@ public final class Settings {
         public static final String QS_UI_STYLE = "qs_ui_style";
 
         /**
-         * Enable and Disable Dual Tone Colors QsPanel
-         * @hide
-         */
-        public static final String QS_DUAL_TONE = "qs_dual_tone";
-
-        /**
          * @hide
          */
         public static final String QS_TILE_LABEL_SIZE = "qs_tile_label_size";

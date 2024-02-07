@@ -81,7 +81,7 @@ public enum ScrimState {
             mBehindAlpha = mClipQsScrim ? mCustomScrimAlpha : mScrimBehindAlphaKeyguard;
             mNotifAlpha = mClipQsScrim ? mScrimBehindAlphaKeyguard : 0;
             if (mClipQsScrim) {
-                updateScrimColor(mScrimBehind, 1f /* alpha */, Color.TRANSPARENT);
+                updateScrimColor(mScrimBehind, mCustomScrimAlpha, Color.TRANSPARENT);
             }
         }
     },
@@ -121,7 +121,7 @@ public enum ScrimState {
         @Override
         public void prepare(ScrimState previousState) {
             mBehindAlpha = mClipQsScrim ? 1 : mDefaultScrimAlpha;
-            mBehindTint = mSurfaceColor;
+            mBehindTint = Color.TRANSPARENT;
             mNotifAlpha = mClipQsScrim ? mDefaultScrimAlpha : 0;
             mNotifTint = Color.TRANSPARENT;
             mFrontAlpha = 0f;
@@ -157,10 +157,10 @@ public enum ScrimState {
             mBehindAlpha = mClipQsScrim ? mCustomScrimAlpha : mDefaultScrimAlpha;
             mNotifAlpha = mCustomScrimAlpha;
             mFrontAlpha = 0f;
-            mBehindTint = Color.TRANSPARENT;
+            mBehindTint = mClipQsScrim ? Color.TRANSPARENT : Color.BLACK;
 
             if (mClipQsScrim) {
-                updateScrimColor(mScrimBehind, 1f /* alpha */, Color.TRANSPARENT);
+                updateScrimColor(mScrimBehind, mCustomScrimAlpha, Color.TRANSPARENT);
             }
         }
     },
@@ -262,22 +262,22 @@ public enum ScrimState {
                     && !fromAod;
 
             mFrontTint = Color.TRANSPARENT;
-            mBehindTint = Color.TRANSPARENT;
+            mBehindTint = Color.BLACK;
             mBlankScreen = false;
 
             if (mDisplayRequiresBlanking && previousState == ScrimState.AOD) {
                 // Set all scrims black, before they fade transparent.
                 updateScrimColor(mScrimInFront, 1f /* alpha */, Color.BLACK /* tint */);
-                updateScrimColor(mScrimBehind, 1f /* alpha */, Color.TRANSPARENT /* tint */);
+                updateScrimColor(mScrimBehind, 1f /* alpha */, Color.BLACK /* tint */);
 
                 // Scrims should still be black at the end of the transition.
                 mFrontTint = Color.BLACK;
-                mBehindTint = Color.TRANSPARENT;
+                mBehindTint = Color.BLACK;
                 mBlankScreen = true;
             }
 
             if (mClipQsScrim) {
-                updateScrimColor(mScrimBehind, 1f /* alpha */, Color.TRANSPARENT);
+                updateScrimColor(mScrimBehind, mCustomScrimAlpha, Color.TRANSPARENT);
             }
         }
     },
