@@ -69,4 +69,7 @@
     <dimen name="qs_bottom_brightness_margin_top">8dp</dimen>
     <dimen name="qs_bottom_brightness_margin_bottom">4dp</dimen>
 
+    <!-- HD calling icon -->
+    <dimen name="signal_icon_viewport_size">24dp</dimen>
+
 </resources>
